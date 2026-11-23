@@ -1,0 +1,66 @@
+---
+title: "Assignment 7"
+author: "Ezekiel Iwarimie"
+date: "11/23/2026"
+output: html_document
+---
+
+## Introduction
+
+This assignment uses ARIMA to analyze monthly airline passenger data from 1949 to 1960. The goal is to build an ARIMA model, examine the residuals, and forecast the number of passengers for the next five months.
+
+## Load and Prepare the Data
+```{r}
+library(fpp2)
+library(forecast)
+
+airline <- read.csv("~/Downloads/airline-passengers.csv")
+
+head(airline)
+str(airline)
+
+# Convert passenger counts into a monthly time-series.
+airline_ts <- ts(
+  airline$Passengers,
+  start = c(1949, 1),
+  frequency = 12)
+
+plot(airline_ts)
+```
+
+The dataset contains monthly airline passenger totals. The data is converted into a time series with a frequency of 12 because there are 12 months in each year. The plot shows how passenger numbers change over time.
+
+## ARIMA
+```{r}
+# Check differencing
+ndiffs(airline_ts)
+nsdiffs(airline_ts)
+
+# ARIMA model
+auto_fit <- auto.arima(airline_ts)
+summary(auto_fit)
+auto_fit
+
+attributes(auto_fit)
+plot(forecast(auto_fit,h=5,level=c(99.5)))
+```
+
+The ARIMA model is used to forecast airline passenger numbers for the next five months. The selected model is ARIMA(2,1,1)(0,1,0)[12]. The model uses previous passenger values and forecasting errors to predict future passenger numbers. The first number (2) means the model uses the previous two observations to help make predictions. The second number (1) means the data is differenced once to remove the trend. The third number (1) means the model uses previous forecasting errors. The seasonal part (0,1,0) accounts for yearly seasonal patterns through seasonal differencing. The [12] represents the 12 months in a year.
+
+## Residual Analysis
+```{r}
+Acf(auto_fit$residuals)
+Box.test(residuals(auto_fit), lag=20, type="Ljung")
+plot.ts(residuals(auto_fit))
+hist(auto_fit$residuals)
+tsdiag(auto_fit)
+
+# Accuracy
+accuracy(auto_fit)
+```
+
+The accuracy measurements are used to evaluate how well the ARIMA model fits the historical data. RMSE, MAE, and MAPE help measure the forecasting errors. Lower error values generally indicate better accuracy.
+
+## Conclusion
+
+Overall, the ARIMA model was used to analyze airline passenger data and forecast the next five months. The model accounts for trends and yearly seasonal patterns in the data. Residual analysis and accuracy measurements help evaluate how well the model performs. This assignment showed how ARIMA can be used to make forecasts based on historical data.
